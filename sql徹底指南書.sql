@@ -1888,3 +1888,207 @@ where
   sale_date = '2018-10-01'
 group by
   sale_date
+
+-- 演習問題1
+select
+  case when x >= y and x >= z then x
+       when y >= x and y >= z then Y
+       else z end as max_colum
+from
+  greatests
+
+select
+  case when z > (
+    case when x > y then x else y end
+  ) then z
+  else case when x > y then x else y end
+from
+  greatests
+
+select
+  case when sex = '1' then '男' else '女' end as '性別',
+  count(population) as '全国',
+  sum(case pref_name when '徳島' then population else null end) as '徳島',
+  sum(case when pref_name in ('徳島', '香川', '愛媛', '高知') then population else null end) as '四国'
+from
+  PopTbl2
+group by
+  sex
+
+select
+  *
+from
+  greatests
+order by
+  case key
+    when 'A' then 2
+    when 'B' then 1
+    when 'C' then 4
+    else 3
+  end
+
+-- 演習2
+select
+  server,
+  sample_date,
+  sum(load_val) over () as sum_load
+from
+  ServerLoadSample
+
+select
+  server,
+  sample_date,
+  sum(load_val) over (partition by server) as sum_load
+from
+  ServerLoadSample
+
+-- 演習3
+select
+  p1.name as name_1,
+  p2.name as name_2
+from
+  products p1
+inner join
+  products p2
+on
+  p1.name <= p2.name
+
+select
+  name,
+  price,
+  (
+    select
+      count(*)
+    from
+      Products p2
+    where
+      p2.price >= p1.price
+  ) as ranking
+from
+  Products p1
+order by
+  ranking
+
+select
+  *,
+  (
+    select
+      count(distinct p2.price) + 1
+    from
+      Products p2
+    where
+      p2.price < p1.price
+  ) as ranking
+from
+  Products p1
+order by
+  ranking
+
+select
+  *
+from
+  ArrayTbl2 at1
+where
+  not exists (
+    select
+      *
+    from
+      ArrayTbl2 at2
+    where
+      at1.kkey = at2.kkey
+      and (at2.val <> 1 or at2.val is null)
+  )
+
+select
+  kkey,
+  max(val) as val
+from
+  ArrayTbl2 at1
+group by
+  at1.kkey
+having
+  sum(case when at1.val = 1 then 1 else null end) = (
+    select
+      count(*)
+    from
+      ArrayTbl2 at2
+    where
+      at1.kkey = at2.kkey
+  )
+
+select
+  kkey,
+  min(val) as val
+from
+  ArrayTbl2
+group by
+  kkey
+having
+  max(val) = min(val)
+
+select
+  *
+from
+  Numbers n1
+where
+  not exists (
+    select
+      *
+    from
+      Numbers n2
+    where
+      n2.num < n1.num / 2
+      and n2.num <> 1
+      and n1.num % n2.num = 0
+  )
+
+select
+  case when max(seq) - min(seq) + 1 = count(*) then '歯抜けなし'
+       else '歯抜けあり'
+  end
+from
+  SeqTbl
+limit 1
+
+select
+  prev_seq + 1,
+  seq - 1
+from
+(
+  select
+    seq,
+    (
+      select
+        max(st3.seq)
+      from
+        SeqTbl st3
+      where
+        st3.seq < st2.seq
+    ) as prev_seq
+  from
+    SeqTbl st2
+) tmp
+where
+  prev_seq < seq - 1
+
+select
+  dpt
+from
+  Students
+group by
+  dpt
+having
+  sum(case when sbmt_date <= '2018-09-30' then 1 else null end) = count(*)
+
+select
+  ShopItems.shop,
+  count(*) as my_items,
+  (select count(*) from Items) - count(*) as diff_count
+from
+  ShopItems
+inner join
+  Items
+on
+  ShopItems.item = Items.item
+group by
+  ShopItems.shop
